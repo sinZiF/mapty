@@ -34,8 +34,7 @@ class Running extends Workout {
         this.getPace();
     }
     getPace() {
-        this.pace = this.duration / this.distance
-        return this.pace
+        return this.pace = this.duration / this.distance;
     }
 }
 class Cycling extends Workout {
@@ -47,8 +46,7 @@ class Cycling extends Workout {
         this.getSpeed();
     }
     getSpeed() {
-        this.speed = this.distance / (this.duration / 60)
-        return this.speed
+        return this.speed = this.distance / (this.duration / 60);
     }
 }
 ////////////////////////////////////////////////////////////////////////
@@ -64,6 +62,7 @@ class App {
             containerWorkouts.addEventListener('click', this._getPositionOnMap.bind(this));
             form.addEventListener('submit', this._newWorkout.bind(this))
     }
+    // ! correct async functions
     async _getAsyncData() {
         try {
             const position = await this._getPosition();
@@ -74,6 +73,7 @@ class App {
             console.log(err)
         }
     }
+    // get current position
     _getPosition() {
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
@@ -81,6 +81,7 @@ class App {
                 reject
         )})
     }
+    // load current map
     _loadMap(position) {
         return new Promise((response, reject) => {
             const {latitude, longitude} = position.coords;
@@ -92,25 +93,24 @@ class App {
             }).addTo(this.#map);
             this.#map.on('click',this._showForm.bind(this))
             response(this.#map)
-            // L.marker([latitude, longitude]).addTo(this.#map)
-            // .bindPopup('A pretty CSS3 popup.<br> Easily customizable.')
-            // .openPopup();
-            // add event listener for a map
         })
     }
     // curent position on map and zoom target
     _getPositionOnMap(e) {
         const getElementWorkout = e.target.closest('.workout');
         if (!getElementWorkout) return;
-
-        const getWorkout = this.#workouts.find(workout => getElementWorkout.dataset.id === workout.id)
+        const getWorkout = this.#workouts.find(workoutId => getElementWorkout.dataset.id === workoutId.id);
         this.#map
-            .setView(getWorkout.cords, this.#sizeZoom, {
+            .setView(getWorkout.cords,
+                this.#sizeZoom,
+                {
                 animate: true,
                 duration: 1.4
-            });
+                }
+            );
 
     }
+    // open form on a page
     _showForm(eMap) {
         this.#eMarker = eMap;
         // remove class hidden for form
@@ -135,7 +135,7 @@ class App {
             inputCadence.closest('.form__row').classList.toggle('form__row--hidden')
             inputElevation.closest('.form__row').classList.toggle('form__row--hidden')
     }
-    // workout and discription workout
+    // add a workout and discription a workout
     _newWorkout(e) {
         e.preventDefault();
         // get data from form
@@ -162,10 +162,6 @@ class App {
                     return alert('input value is not a number')
                 }
             workout = new Running([lat, lng], distance, duration, cadence)
-            this.#workouts.push(workout)
-            this._renderWorkoutMarker(workout)
-            this._renderWorkout.call(workout, form)
-            this._hiddenForm()
         }
         if (type === 'cycling') {
             const elevation = +inputElevation.value;
@@ -174,13 +170,18 @@ class App {
                 return alert('input value is not a number')
             }
             workout = new Cycling([lat, lng], distance, duration, elevation);
-            this.#workouts.push(workout);
-            this._renderWorkoutMarker(workout);
-            this._renderWorkout.call(workout, form)
-            this._hiddenForm();
         }
+
+        // add a workout to the workouts array
+        this.#workouts.push(workout);
+        // render  workout marker
+        this._renderWorkoutMarker(workout);
+        // render workout to a form
+        this._renderWorkout.call(workout, form);
+        // hiden a form
+        this._hiddenForm();
+
         workoutStorage(workout)
-        // localStorage.clear()
     }
     // add a marker on map with discription
     _renderWorkoutMarker(workout) {
@@ -246,9 +247,16 @@ class App {
 
     }
     // LOCAL STORAGE FUNCTION
+    _getDataLocalStorage(data) {
+        return JSON.parse(localStorage.getItem(localStorage.key(data)))
+    }
+    // ! eddit function. not correct function!
     _loadStorage() {
         return new Promise((resolve, reject) => {
             for (let i = 0; i < localStorage.length; i++) {
+                if (!this.#workouts.length < localStorage.length) {
+                    this.#workouts.push(this._getDataLocalStorage(i))
+                }
                 resolve(this._renderWorkout.call(JSON.parse(localStorage.getItem(localStorage.key(i))), form))
                 this._renderWorkoutMarker(JSON.parse(localStorage.getItem(localStorage.key(i))));
             }
